@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cycle shops and repairs map</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+      #map {
+        width: 100%;
+        height: 100vh;
+      }
+      .leaflet-popup-content-wrapper {
+        width: auto !important;
+      }
+      .leaflet-popup-content {
+        font-size: 10px; /* Adjust the font size as needed */
+        margin: 0;
+        padding: 0;
+      }
+      .leaflet-popup-content table {
+        font-size: 10px; /* Adjust the font size for table content */
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script>
+      var map = L.map("map").setView([51.4545, -2.5879], 13); // Centered on Bristol
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+      }).addTo(map);
+
+      // Define a custom cycle icon
+      // Define a custom cycle icon using SVG data
+      var cycleIcon = L.icon({
+        iconUrl:
+          'data:image/svg+xml;charset=utf-8,<svg fill="%23000000" height="48px" width="48px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 297 297" xml:space="preserve"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M38.024,57.55c-5.637,0-10.207,4.57-10.207,10.207v16.501c0,3.691,1.992,7.095,5.211,8.9 c3.218,1.808,7.162,1.735,10.312-0.187l11.526-7.032l1.116,29.725C24.006,122.703,0,151.247,0,185.309 c0,39.328,31.996,71.323,71.323,71.323c39.328,0,71.323-31.995,71.323-71.323c0-10.729-2.395-20.905-6.657-30.041l65.747-43.221 l1.144,5.695c-28.179,9.534-48.526,36.209-48.526,67.566c0,39.328,31.995,71.323,71.322,71.323 c39.328,0,71.324-31.995,71.324-71.323s-31.996-71.324-71.324-71.324c-0.91,0-1.812,0.035-2.715,0.068l-10.694-53.27H245.3 c0.607,1.007,1.221,2.217,1.664,3.546c1.031,3.096,1.526,7.337-3.85,12.712c-3.986,3.986-3.986,10.45,0,14.436 c3.986,3.985,10.448,3.985,14.435,0c9.664-9.664,12.783-21.598,8.782-33.603c-2.787-8.359-8.177-13.91-8.782-14.516 c-1.914-1.914-4.51-2.989-7.218-2.989h-50.525c-3.059,0-5.957,1.372-7.895,3.738c-1.938,2.367-2.715,5.478-2.112,8.478l7.69,38.309 H75.28V77.964h23.477c5.637,0,10.207-4.57,10.207-10.207c0-5.637-4.57-10.207-10.207-10.207H38.024z M122.232,185.309 c0,28.071-22.838,50.909-50.909,50.909c-28.071,0-50.909-22.838-50.909-50.909c0-23.319,15.766-43.014,37.193-49.019l3.925,49.819 c0.283,3.599,2.445,6.779,5.687,8.366c1.422,0.696,2.957,1.04,4.488,1.04c1.96,0,3.914-0.564,5.607-1.678l41.36-27.189 C120.962,172.431,122.232,178.723,122.232,185.309z M77.971,134.847c11.488,1.506,21.784,6.847,29.549,14.705l-26.992,17.744 L77.971,134.847z M124.802,138.19c-12.041-13.65-29.205-22.663-48.459-24.01l-0.227-2.874h89.581L124.802,138.19z M225.676,236.218 c-28.071,0-50.908-22.838-50.908-50.909c0-21.458,13.351-39.845,32.176-47.323l9.904,49.332c0.974,4.849,5.234,8.2,9.997,8.2 c0.665,0,1.341-0.066,2.02-0.201c5.525-1.11,9.107-6.49,7.998-12.018l-9.811-48.865c27.436,0.734,49.533,23.265,49.533,50.875 C276.586,213.38,253.747,236.218,225.676,236.218z"></path></g></svg>',
+        iconSize: [48, 48], // size of the icon
+        iconAnchor: [32, 64], // point of the icon which will correspond to marker's location
+        popupAnchor: [0, -64], // point from which the popup should open relative to the iconAnchor
+      });
+
+      // Replace with your GeoJSON URL
+      var geoServiceUrl =
+        "https://maps2.bristol.gov.uk/server2/rest/services/ext/ll_leisure_and_culture/MapServer/22/query?outFields=*&where=1%3D1&f=geojson";
+
+      // Fetch data from the GeoService
+      fetch(geoServiceUrl)
+        .then((response) => response.json())
+        .then((data) => {
+          // Assuming the data is in GeoJSON format
+          L.geoJSON(data, {
+            pointToLayer: function (feature, latlng) {
+              return L.marker(latlng, { icon: cycleIcon });
+            },
+            onEachFeature: function (feature, layer) {
+              // Bind a pop-up to each feature with a Bootstrap table
+              var popupContent =
+                '<div class="table-responsive"><table class="table table-striped">';
+              for (var key in feature.properties) {
+                // Change 'SERVICES_PROVIDED' to 'SERVICES'
+                var displayKey = key === "SERVICES_PROVIDED" ? "SERVICES" : key;
+                popupContent +=
+                  "<tr><th>" +
+                  displayKey +
+                  "</th><td>" +
+                  feature.properties[key] +
+                  "</td></tr>";
+              }
+              popupContent += "</table></div>";
+              layer.bindPopup(popupContent);
+            },
+          }).addTo(map);
+        })
+        .catch((error) => console.error("Error loading data:", error));
+    </script>
+  </body>
+</html>
